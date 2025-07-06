@@ -832,7 +832,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-6 md:mb-16 slide-in-top">
             <h2 className="font-display text-xl md:text-4xl lg:text-5xl font-bold text-wedding-charcoal mb-2 md:mb-4">
-              Відгуки з <span className="text-green-600">InstaГГГgram</span>
+              Відгуки з <span className="text-green-600">Instagram</span>
             </h2>
             <p className="text-sm md:text-lg text-wedding-gray max-w-2xl mx-auto">
               Справжні відгуки наших клієнтів з соціальних мереж
