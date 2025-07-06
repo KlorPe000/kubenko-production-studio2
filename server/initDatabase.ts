@@ -6,6 +6,7 @@ import {
   adminUsers,
   bookedDates
 } from "@shared/schema";
+import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 export async function initializeDatabase() {
@@ -15,6 +16,10 @@ export async function initializeDatabase() {
     console.log("Database not available, skipping initialization");
     return;
   }
+  
+  // Version identifier - change this when you need to force updates
+  const DB_VERSION = '2025-07-06-v2';
+  console.log(`Database version: ${DB_VERSION}`);
   
   try {
     // First, ensure tables exist with correct structure
@@ -118,11 +123,22 @@ export async function initializeDatabase() {
       throw schemaError;
     }
     
-    // Check if admin user exists
-    const adminExists = await db.select().from(adminUsers).limit(1);
+    // Check if admin user exists and update if needed
+    console.log("Checking admin user configuration...");
     
-    if (adminExists.length === 0) {
-      console.log("Creating default admin user...");
+    // Remove old admin user if exists
+    const oldAdminExists = await db.select().from(adminUsers).where(eq(adminUsers.username, 'admin')).limit(1);
+    if (oldAdminExists.length > 0) {
+      console.log("Removing old admin user (admin)...");
+      await db.delete(adminUsers).where(eq(adminUsers.username, 'admin'));
+      console.log("Old admin user removed successfully");
+    }
+    
+    // Check current admin user
+    const currentAdmin = await db.select().from(adminUsers).where(eq(adminUsers.username, 'rus')).limit(1);
+    
+    if (currentAdmin.length === 0) {
+      console.log("Creating new admin user (rus)...");
       const hashedPassword = await bcrypt.hash("rus123", 10);
       await db.insert(adminUsers).values({
         username: "rus",
@@ -131,6 +147,18 @@ export async function initializeDatabase() {
         isActive: true
       });
       console.log("Admin user created successfully");
+    } else {
+      // Force update password to ensure latest code changes apply
+      console.log("Updating admin password to match current code...");
+      const hashedPassword = await bcrypt.hash("rus123", 10);
+      await db.update(adminUsers)
+        .set({ 
+          passwordHash: hashedPassword,
+          email: "rus@kubenko.com",
+          isActive: true
+        })
+        .where(eq(adminUsers.username, 'rus'));
+      console.log("Admin user updated successfully");
     }
     
     // Portfolio table is ready, no default items needed
